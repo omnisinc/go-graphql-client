@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/hasura/go-graphql-client/internal/jsonutil"
+	"github.com/omnisinc/go-graphql-client/internal/jsonutil"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -194,6 +194,13 @@ type errors []struct {
 	Locations []struct {
 		Line   int
 		Column int
+	}
+	Path       []string
+	Extensions []struct {
+		ErrorType  string
+		ErrorClass string
+		LegacyCode string
+		InputPath  []string
 	}
 }
 
