@@ -2,6 +2,7 @@ package graphql_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,21 @@ import (
 
 	"github.com/omnisinc/go-graphql-client"
 )
+
+type e []struct {
+	Message   string
+	Locations []struct {
+		Line   int
+		Column int
+	}
+	Path       []string
+	Extensions struct {
+		ErrorType  string
+		ErrorClass string
+		LegacyCode string
+		InputPath  []string
+	}
+}
 
 func TestClient_Query_partialDataWithErrorResponse(t *testing.T) {
 	mux := http.NewServeMux()
@@ -29,6 +45,10 @@ func TestClient_Query_partialDataWithErrorResponse(t *testing.T) {
 					"path": [
 						"node2"
 					],
+					"extensions": {
+						"errorClass": "NOT_FOUND",
+						"errorType": "developer_error"
+					},
 					"locations": [
 						{
 							"line": 10,
@@ -58,6 +78,30 @@ func TestClient_Query_partialDataWithErrorResponse(t *testing.T) {
 	err = client.Query(context.Background(), &q, nil)
 	if err == nil {
 		t.Fatal("got error: nil, want: non-nil")
+	}
+	er := e{
+		{
+			Message: "Could not resolve to a node with the global id of 'NotExist'",
+			Locations: []struct {
+				Line   int
+				Column int
+			}{{Line: 10, Column: 4}},
+			Path: []string{"node2"},
+			Extensions: struct {
+				ErrorType  string
+				ErrorClass string
+				LegacyCode string
+				InputPath  []string
+			}{ErrorType: "developer_error", ErrorClass: "NOT_FOUND"},
+		},
+	}
+
+	errByte, _ := json.Marshal(err)
+	erByte, _ := json.Marshal(er)
+	erString := string(erByte)
+	errString := string(errByte)
+	if erString != errString {
+		t.Error("error is different")
 	}
 	if got, want := err.Error(), "Could not resolve to a node with the global id of 'NotExist'"; got != want {
 		t.Errorf("got error: %v, want: %v", got, want)

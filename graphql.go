@@ -196,7 +196,7 @@ type errors []struct {
 		Column int
 	}
 	Path       []string
-	Extensions []struct {
+	Extensions struct {
 		ErrorType  string
 		ErrorClass string
 		LegacyCode string
